@@ -53,7 +53,7 @@ def prepare(prepCtx):
 	prepCtx.end_msg(filePath)
     else:
 	prepCtx.start_msg('Downloading %s' % url)
-	triedRemaining = 10
+	triesRemaining = 10
 	while triesRemaining > 1:
 	    try:
 		urllib.urlretrieve(url, filePath)
