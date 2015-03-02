@@ -61,7 +61,7 @@ def prepare(prepCtx):
 	    except urllib.ContentTooShortError:
 		triesRemaining -= 1
 		if os.path.exists(filePath):
-		    os.remove(path)
+		    os.remove(filePath)
 	else:
 	    prepCtx.fatal('Could not download %s' % url)
 	prepCtx.end_msg('Saved to %s' % filePath)
