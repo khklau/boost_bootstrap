@@ -11,8 +11,9 @@ from waflib.extras.build_status import BuildStatus
 
 __downloadUrl = 'http://sourceforge.net/projects/boost/files/boost/1.54.0/%s/download'
 __posixFile = 'boost_1_54_0.tar.gz'
+__posixSha256Checksum = '\x41\x2d\x00\x32\x99\xe7\x25\x55\xe1\xe1\xf6\x2f\x51\xd3\xb0\x7e\xca\x2a\x19\x11\xe2\x7c\x44\x2e\xe1\xc0\x81\x67\x82\x6e\xf9\xe2'
 __ntFile = 'boost_1_54_0.zip'
-__sha256Checksum = '\x41\x2d\x00\x32\x99\xe7\x25\x55\xe1\xe1\xf6\x2f\x51\xd3\xb0\x7e\xca\x2a\x19\x11\xe2\x7c\x44\x2e\xe1\xc0\x81\x67\x82\x6e\xf9\xe2'
+__ntSha256Checksum = '\x83\x61\xdd\xef\xbc\x1c\x9c\x2e\x44\x9e\xc9\x4c\xb8\xe0\xda\x66\x49\xd0\x76\x10\x2c\xde\x4e\xa1\x1a\xdf\xdd\x2a\x73\xe8\x41\x1e'
 __srcDir = 'src'
 
 def options(optCtx):
@@ -33,9 +34,11 @@ def prepare(prepCtx):
     if os.name == 'posix':
 	filePath = os.path.join(prepCtx.path.abspath(), __posixFile)
 	url = __downloadUrl % __posixFile
+	sha256Checksum = __posixSha256Checksum
     elif os.name == 'nt':
 	filePath = os.path.join(prepCtx.path.abspath(), __ntFile)
 	url = __downloadUrl % __ntFile
+	sha256Checksum = __ntSha256Checksum
     else:
 	prepCtx.fatal('Unsupported OS %s' % os.name)
     if os.access(filePath, os.R_OK):
@@ -45,7 +48,7 @@ def prepare(prepCtx):
 	    hasher.update(handle.read())
 	finally:
 	    handle.close()
-	if hasher.digest() != __sha256Checksum:
+	if hasher.digest() != sha256Checksum:
 	    os.remove(filePath)
     if os.access(filePath, os.R_OK):
 	prepCtx.start_msg('Using existing source file')
