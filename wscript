@@ -26,6 +26,7 @@ def options(optCtx):
 	    help='Compiler toolset, e.g. gcc, msvc')
 
 def prepare(prepCtx):
+    prepCtx.options.dep_base_dir = prepCtx.srcnode.find_dir('..').abspath()
     prepCtx.load('dep_resolver')
     status = BuildStatus.init(prepCtx.path.abspath())
     if status.isSuccess():
