@@ -8,6 +8,8 @@ import zipfile
 from waflib import Logs
 from waflib.extras.preparation import PreparationContext
 from waflib.extras.build_status import BuildStatus
+from waflib.extras.filesystem_utils import removeSubdir
+from waflib.extras.url_utils import syncRemoteFile
 
 __downloadUrl = 'http://sourceforge.net/projects/boost/files/boost/1.54.0/%s/download'
 __posixFile = 'boost_1_54_0.tar.gz'
@@ -42,54 +44,24 @@ def prepare(prepCtx):
 	sha256Checksum = __ntSha256Checksum
     else:
 	prepCtx.fatal('Unsupported OS %s' % os.name)
-    if os.access(filePath, os.R_OK):
-	hasher = hashlib.sha256()
-	handle = open(filePath, 'rb')
-	try:
-	    hasher.update(handle.read())
-	finally:
-	    handle.close()
-	if hasher.digest() != sha256Checksum:
-	    os.remove(filePath)
-    if os.access(filePath, os.R_OK):
-	prepCtx.start_msg('Using existing source file')
-	prepCtx.end_msg(filePath)
+    prepCtx.msg('Synchronising', url)
+    if syncRemoteFile(sha256Checksum, url, filePath):
+	prepCtx.msg('Saved to', filePath)
     else:
-	prepCtx.start_msg('Downloading %s' % url)
-	triesRemaining = 10
-	while triesRemaining > 1:
-	    try:
-		urllib.urlretrieve(url, filePath)
-		break
-	    except urllib.ContentTooShortError:
-		triesRemaining -= 1
-		if os.path.exists(filePath):
-		    os.remove(filePath)
-	else:
-	    prepCtx.fatal('Could not download %s' % url)
-	prepCtx.end_msg('Saved to %s' % filePath)
-    srcPath = os.path.join(prepCtx.path.abspath(), __srcDir)
-    extractPath = os.path.join(prepCtx.path.abspath(), 'boost_1_54_0')
-    binPath = os.path.join(prepCtx.path.abspath(), 'bin')
-    libPath = os.path.join(prepCtx.path.abspath(), 'lib')
-    includePath = os.path.join(prepCtx.path.abspath(), 'include')
-    for path in [srcPath, extractPath, binPath, libPath, includePath]:
-	if os.path.exists(path):
-	    if os.path.isdir(path):
-		shutil.rmtree(path)
-	    else:
-		os.remove(path)
+	prepCtx.fatal('Synchronisation failed')
+    extractDir = 'boost_1_54_0'
+    removeSubdir(prepCtx.path.abspath(), __srcDir, extractDir, 'bin', 'lib', 'include')
     prepCtx.start_msg('Extracting files to')
     if os.name == 'posix':
 	handle = tarfile.open(filePath, 'r:*')
 	handle.extractall(prepCtx.path.abspath())
     elif os.name == 'nt':
-	handle = zipfile.Zipfile(filePath, 'r')
+	handle = zipfile.ZipFile(filePath, 'r')
 	handle.extractall(prepCtx.path.abspath())
     else:
 	prepCtx.fatal('Unsupported OS %s' % os.name)
-    os.rename(extractPath, srcPath)
-    prepCtx.end_msg(srcPath)
+    os.rename(extractDir, __srcDir)
+    prepCtx.end_msg(os.path.join(prepCtx.path.abspath(), __srcDir))
 
 def configure(confCtx):
     confCtx.load('dep_resolver')
